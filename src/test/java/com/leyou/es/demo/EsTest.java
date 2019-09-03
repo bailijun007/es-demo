@@ -1,9 +1,15 @@
 package com.leyou.es.demo;
 
+import com.jayway.jsonpath.internal.function.numeric.AbstractAggregation;
 import com.leyou.es.pojo.Item;
 import com.leyou.es.repository.ItemRepository;
 import org.elasticsearch.index.query.QueryBuilder;
 import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.aggregations.AbstractAggregationBuilder;
+import org.elasticsearch.search.aggregations.Aggregation;
+import org.elasticsearch.search.aggregations.AggregationBuilders;
+import org.elasticsearch.search.aggregations.Aggregations;
+import org.elasticsearch.search.aggregations.bucket.terms.StringTerms;
 import org.elasticsearch.search.sort.SortBuilders;
 import org.elasticsearch.search.sort.SortOrder;
 import org.junit.Test;
@@ -14,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.aggregation.AggregatedPage;
 import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
 import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
 import org.springframework.data.elasticsearch.core.query.SourceFilter;
@@ -26,10 +33,10 @@ import java.util.List;
 @SpringBootTest
 public class EsTest {
     @Autowired
-    ElasticsearchTemplate template;
+    ElasticsearchTemplate template; //原生es的
 
     @Autowired
-    private ItemRepository itemRepository;
+    private ItemRepository itemRepository; //spring data 封装好的
 
     @Test
     public void testCreate(){
@@ -89,7 +96,27 @@ public class EsTest {
         for (Item item : result) {
             System.out.println("item    ="+item);
         }
+    }
 
+    @Test
+    public void testAgg(){
+        NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+        //聚合
+        String aggName="popularBrand";
+        queryBuilder.addAggregation(AggregationBuilders.terms(aggName).field("brand"));
+        //查询并返回聚合结果
+        AggregatedPage<Item> result = template.queryForPage(queryBuilder.build(), Item.class);
+        //解析聚合
+        Aggregations aggs = result.getAggregations();
+        //获取指定名称的聚合
+        StringTerms terms = aggs.get(aggName);
+        //获取桶
+        List<StringTerms.Bucket> buckets = terms.getBuckets();
+        for (StringTerms.Bucket bucket : buckets) {
+            System.out.println("key = " + bucket.getKey());
+            System.out.println("docCount = " + bucket.getDocCount());
+
+        }
 
     }
 
