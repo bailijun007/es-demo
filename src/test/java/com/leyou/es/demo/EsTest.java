@@ -2,11 +2,21 @@ package com.leyou.es.demo;
 
 import com.leyou.es.pojo.Item;
 import com.leyou.es.repository.ItemRepository;
+import org.elasticsearch.index.query.QueryBuilder;
+import org.elasticsearch.index.query.QueryBuilders;
+import org.elasticsearch.search.sort.SortBuilders;
+import org.elasticsearch.search.sort.SortOrder;
 import org.junit.Test;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.elasticsearch.core.ElasticsearchTemplate;
+import org.springframework.data.elasticsearch.core.query.FetchSourceFilter;
+import org.springframework.data.elasticsearch.core.query.NativeSearchQueryBuilder;
+import org.springframework.data.elasticsearch.core.query.SourceFilter;
 import org.springframework.test.context.junit4.SpringRunner;
 
 import java.util.ArrayList;
@@ -55,6 +65,32 @@ public class EsTest {
         for (Item item : itemList) {
             System.out.println("item  ="+item);
         }
+    }
+
+    //原生查询
+    @Test
+    public void testQuery(){
+        //创建查询构造器
+        NativeSearchQueryBuilder queryBuilder = new NativeSearchQueryBuilder();
+        //结果过滤
+        queryBuilder.withSourceFilter(new FetchSourceFilter(new String[]{"id","title","price"},null));
+        //添加查询条件
+        queryBuilder.withQuery(QueryBuilders.matchQuery("title","小米手机"));
+       //排序
+        queryBuilder.withSort(SortBuilders.fieldSort("price").order(SortOrder.DESC));
+        //分页
+        queryBuilder.withPageable(PageRequest.of(0,2));
+        //查询
+        Page<Item> result = itemRepository.search(queryBuilder.build());
+        long total = result.getTotalElements();
+        System.out.println("total   ="+total);
+        int pages = result.getTotalPages();
+        System.out.println("pages  ="+pages);
+        for (Item item : result) {
+            System.out.println("item    ="+item);
+        }
+
+
     }
 
 }
