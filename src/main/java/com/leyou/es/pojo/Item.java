@@ -18,7 +18,7 @@ public class Item {
     private Long id;
 
    // @Field(type = FieldType.Text, analyzer = "ik_max_word")
-    @Field(type = FieldType.Text/*,analyzer = "ik_smart"*/)
+    @Field(type = FieldType.Text/*,analyzer = "ik_smart"*/) //如果用不到分词器就注释，用到则解开注释
     private String title;//标题
 
     @Field(type = FieldType.Keyword)
